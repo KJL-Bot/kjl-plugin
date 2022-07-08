@@ -172,7 +172,8 @@ class Kjl_Bot_Filter {
 
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
-
+		
+		add_shortcode('kjl-bot-filter', [$plugin_public, 'kjl_bot_filter_shortcode']);
 	}
 
 	/**

@@ -100,4 +100,34 @@ class Kjl_Bot_Filter_Public {
 
 	}
 
+	public function kjl_bot_filter_shortcode($attributes): string
+	{
+		extract( shortcode_atts( [
+			'kjl_bot_filter_id' => 'kjl_bot_filter_id',
+		], $attributes ), EXTR_SKIP );
+		$json = file_get_contents('http://artisticengines.com/kjl/recentBooks.json');
+		$books = json_decode($json);
+		$i = 0;
+		$content = '<div class="books">';
+		foreach($books as $book) {
+			$content .= '<div class="book">';
+			$content .= '<img class="book-cover" src="'.$book->coverUrl.'" />';
+			$content .= '<div class="book-info">';
+			$content .= 'Autor(in): '.$book->titleAuthor.'<br>';
+			$content .= 'Titel: '.$book->title.'<br>';
+			$content .= 'Verlag: '.$book->publisher.'<br>';
+			$content .= 'Erscheinungsort: '.$book->publicationPlace.'<br>';
+			$content .= 'Erscheinungsdatum: '.$book->projectedPublicationDate.'<br>';
+			$content .= '</div>';
+			$content .= '</div>';
+			if($i === 10) {
+				break;
+			}
+			++$i;
+		}
+		$content .= '</div>';
+		
+		return $content;
+	}
+
 }
