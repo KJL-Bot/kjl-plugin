@@ -223,6 +223,7 @@ class Kjl_Bot_Filter_Public {
 			$content .= '<b>Verlag:</b> '.$book->publisher.'<br>';
 			$content .= '<b>Erscheinungsort:</b> '.$book->publicationPlace.'<br>';
 			$content .= '<b>Erscheinungsdatum:</b> '.date('M Y', strtotime($book->projectedPublicationDate)).'<br>';
+			$content .= '<b>Schlagwörter:</b> '.($book->keywords !== '' ? $book->keywords : '-').'<br>';
 			$content .= '<a href="linkToDataset">Link zu DNB</a>';
 			$content .= '</div>';
 			$content .= '</div>';
