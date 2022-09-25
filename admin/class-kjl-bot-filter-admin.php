@@ -100,4 +100,11 @@ class Kjl_Bot_Filter_Admin {
 
 	}
 
+	public function kjl_cron_exec() {
+		$json_file =  wp_upload_dir(null, false, false)['basedir']. '/kjl-data/recentBooks.json';
+		$json = file_get_contents($json_file);
+		$books = json_decode($json);
+		
+	}
+
 }
