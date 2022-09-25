@@ -109,8 +109,19 @@ class Kjl_Bot_Filter_Public {
 
 	public function kjl_bot_filter_shortcode($attributes): string
 	{
+		$atts = shortcode_atts([
+			'djlp_filter' => isset($_GET['djlp_filter']) ? sanitize_key($_GET['djlp_filter']) : '',
+			'kimi_filter' => isset($_GET['kimi_filter']) ? sanitize_key($_GET['kimi_filter']) : '',
+			'kjl_author' => isset($_GET['kjl_author']) ? sanitize_key($_GET['kjl_author']) : '',
+			'kjl_publisher' => isset($_GET['kjl_publisher']) ? sanitize_key($_GET['kjl_publisher']) : '',
+			'kjl_title' => isset($_GET['kjl_title']) ? sanitize_key($_GET['kjl_title']) : '',
+			'kjl_location' => isset($_GET['kjl_location']) ? sanitize_key($_GET['kjl_location']) : '',
+			'kjl_date' => isset($_GET['kjl_date']) ? sanitize_key($_GET['kjl_date']) : '',
+
+		], $attributes, 'kjl-bot-filter');
 		extract( shortcode_atts( [
 			'kjl_bot_filter_id' => 'kjl_bot_filter_id',
+
 		], $attributes ), EXTR_SKIP );
 		$json_file =  wp_upload_dir(null, false, false)['basedir']. '/kjl-data/recentBooks.json';
 		$json = file_get_contents($json_file);
@@ -126,59 +137,65 @@ class Kjl_Bot_Filter_Public {
 		$publisher_active = '';
 		$title_active = '';
 		$location_active = '';
-		if(isset($_GET['djlp_filter']) && $_GET['djlp_filter'] === 'on') {
+		$date_active = '';
+		if($atts['djlp_filter'] === 'on') {
 			$djlp_value = 'on';
 			$djlp_checked = 'checked';
 		}
-		if(isset($_GET['kimi_filter']) && $_GET['kimi_filter'] === 'on') {
+		if($atts['kimi_filter'] === 'on') {
 			$kimi_value = 'on';
 			$kimi_checked = 'checked';
 		}
-		if(isset($_GET['author']) && $_GET['author'] === 'on') {
+		if($atts['kjl_author'] === 'on') {
 			$author_value = 'on';
 			$author_active = 'active';
 			usort($books,function($a,$b) { return strnatcasecmp($a->titleAuthor,$b->titleAuthor);});
 
 		}
-		if(isset($_GET['publisher']) && $_GET['publisher'] === 'on') {
+		if($atts['kjl_publisher'] === 'on') {
 			$publisher_active = 'active';
 			usort($books,function($a,$b) {return strnatcasecmp($a->publisher,$b->publisher);});
 
 		}
-		if(isset($_GET['title']) && $_GET['title'] === 'on') {
+		if($atts['kjl_title'] === 'on') {
 			$title_active = 'active';
 			usort($books,function($a,$b) {return strnatcasecmp($a->title,$b->title);});
 
 		}
-		if(isset($_GET['location']) && $_GET['location'] === 'on') {
+		if($atts['kjl_location'] === 'on') {
 			$location_active = 'active';
 			usort($books,function($a,$b) {return strnatcasecmp($a->publicationPlace,$b->publicationPlace);});
+
+		}
+		if($atts['kjl_date'] === 'on') {
+			$date_active = 'active';
+			usort($books,function($a,$b) {return strnatcasecmp($a->projectedPublicationDate,$b->projectedPublicationDate);});
 
 		}
 		$content = '<div class="books">';
 		$content = '<div class="books-filter-container">';
 		$content .= '<h3 class="filter-title">Sortiere KJL-Veröffentlichungen alphabetisch nach:</h3>';
-		$content .= '<form action="" method="GET">';
+		$content .= '<form action="/" method="GET" name="kjl-bot">';
 		$content .= '<div class="books-filter">';
 		$content .= '<div class="filter-option">';
 		$content .= '<button id="filter_author" class="filter '.$author_active.'">Autor*in</button>';
-		$content .= '<input id="author_input" type="hidden" name="author" value="'.$author_value.'">';
+		$content .= '<input id="author_input" type="hidden" name="kjl_author" value="'.$author_value.'">';
 		$content .= '</div>';
 		$content .= '<div class="filter-option">';
 		$content .= '<button id="filter_publisher" class="filter '.$publisher_active.'">Verlag</button>';
-		$content .= '<input id="publisher_input" type="hidden" name="publisher" value="">';
+		$content .= '<input id="publisher_input" type="hidden" name="kjl_publisher" value="">';
 		$content .= '</div>';
 		$content .= '<div class="filter-option">';
 		$content .= '<button id="filter_title" class="filter '.$title_active.'">Titel</button>';
-		$content .= '<input id="title_input" type="hidden" name="title" value="">';
+		$content .= '<input id="title_input" type="hidden" name="kjl_title" value="">';
 		$content .= '</div>';
 		$content .= '<div class="filter-option">';
 		$content .= '<button id="filter_location" class="filter '.$location_active.'">Erscheinungsort</button>';
-		$content .= '<input id="location_input" type="hidden" name="location" value="">';
+		$content .= '<input id="location_input" type="hidden" name="kjl_location" value="">';
 		$content .= '</div>';
 		$content .= '<div class="filter-option">';
-		$content .= '<button id="filter_date" class="filter '.$location_active.'">Erscheinungsdatum</button>';
-		$content .= '<input id="date_input" type="hidden" name="date" value="">';
+		$content .= '<button id="filter_date" class="filter '.$date_active.'">Erscheinungsdatum</button>';
+		$content .= '<input id="date_input" type="hidden" name="kjl_date" value="">';
 		$content .= '</div>';
 		$content .= '</div><!-- books-filter -->';
 		$content .= '<div class="slider-container">';
@@ -212,7 +229,6 @@ class Kjl_Bot_Filter_Public {
 			$cover_url = plugin_dir_url( __FILE__ ).'images/empty_cover.jpg';
 			$file = $book->coverUrl;
 			$file_headers = @get_headers($file);
-			// var_dump($file_headers);
 			if($file_headers[0] !== 'HTTP/1.1 404 Not Found') {
 				$cover_url = $file;
 			}
