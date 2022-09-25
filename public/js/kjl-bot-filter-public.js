@@ -71,6 +71,14 @@
 			hiddenField.val(val === "on" ? "off" : "on");
 		});
 
+		$('#filter_date').on('click', function() {
+			clearAllSortingInputs();
+			var hiddenField = $('#date_input'),
+				val = hiddenField.val();
+		
+			hiddenField.val(val === "on" ? "off" : "on");
+		});
+
 
 		$('#toggleswitch_djlp').on('click',function(){
 			var hiddenField = $('#toggleswitch_djlp_input'),
