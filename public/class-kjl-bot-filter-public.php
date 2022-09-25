@@ -107,6 +107,25 @@ class Kjl_Bot_Filter_Public {
 		}
 	}
 
+	private function get_month_name_by_number(int $number): string 
+	{
+		$month_names = [
+			1=>"Januar",
+			2=>"Februar",
+			3=>"März",
+			4=>"April",
+			5=>"Mai",
+			6=>"Juni",
+			7=>"Juli",
+			8=>"August",
+			9=>"September",
+			10=>"Oktober",
+			11=>"November",
+			12=>"Dezember"
+		];
+		return $month_names[$number];
+	}
+
 	public function kjl_bot_filter_shortcode($attributes): string
 	{
 		$atts = shortcode_atts([
@@ -238,7 +257,7 @@ class Kjl_Bot_Filter_Public {
 			$content .= '<b>Titel:</b> '.$book->title.'<br>';
 			$content .= '<b>Verlag:</b> '.$book->publisher.'<br>';
 			$content .= '<b>Erscheinungsort:</b> '.$book->publicationPlace.'<br>';
-			$content .= '<b>Erscheinungsdatum:</b> '.date('M Y', strtotime($book->projectedPublicationDate)).'<br>';
+			$content .= '<b>Erscheinungsdatum:</b> '.$this->get_month_name_by_number(date('n', strtotime($book->projectedPublicationDate))).' '.date('Y', strtotime($book->projectedPublicationDate)).'<br>';
 			$content .= '<b>Schlagwörter:</b> '.($book->keywords !== '' ? $book->keywords : '-').'<br>';
 			$content .= '<a href="linkToDataset">Link zu DNB</a>';
 			$content .= '</div>';
