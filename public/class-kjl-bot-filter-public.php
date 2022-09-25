@@ -126,6 +126,12 @@ class Kjl_Bot_Filter_Public {
 		return $month_names[$number];
 	}
 
+	private function remove_special_char($str): string
+	{
+		$res = preg_replace('/[0-9\@\.\;\" "]+/', '', $str);
+		return $res;
+	}
+
 	public function kjl_bot_filter_shortcode($attributes): string
 	{
 		$atts = shortcode_atts([
@@ -148,8 +154,8 @@ class Kjl_Bot_Filter_Public {
 		$i = 0;
 
 		$djlp_checked = '';
-		$djlp_value = '';
-		$kimi_value = '';
+		$djlp_value = 'on';
+		$kimi_value = 'on';
 		$kimi_checked = '';
 		$author_active = '';
 		$author_value = '';
@@ -157,38 +163,38 @@ class Kjl_Bot_Filter_Public {
 		$title_active = '';
 		$location_active = '';
 		$date_active = '';
-		if($atts['djlp_filter'] === 'on') {
-			$djlp_value = 'on';
+		if($atts['djlp_filter'] === 'off') {
+			$djlp_value = 'off';
 			$djlp_checked = 'checked';
 		}
-		if($atts['kimi_filter'] === 'on') {
-			$kimi_value = 'on';
+		if($atts['kimi_filter'] === 'off') {
+			$kimi_value = 'off';
 			$kimi_checked = 'checked';
 		}
 		if($atts['kjl_author'] === 'on') {
 			$author_value = 'on';
 			$author_active = 'active';
-			usort($books,function($a,$b) { return strnatcasecmp($a->titleAuthor,$b->titleAuthor);});
+			usort($books,function($a,$b) { return strnatcasecmp($this->remove_special_char($a->titleAuthor),$this->remove_special_char($b->titleAuthor));});
 
 		}
 		if($atts['kjl_publisher'] === 'on') {
 			$publisher_active = 'active';
-			usort($books,function($a,$b) {return strnatcasecmp($a->publisher,$b->publisher);});
+			usort($books,function($a,$b) {return strnatcasecmp($this->remove_special_char($a->publisher),$this->remove_special_char($b->publisher));});
 
 		}
 		if($atts['kjl_title'] === 'on') {
 			$title_active = 'active';
-			usort($books,function($a,$b) {return strnatcasecmp($a->title,$b->title);});
+			usort($books,function($a,$b) {return strnatcasecmp($this->remove_special_char($a->title),$this->remove_special_char($b->title));});
 
 		}
 		if($atts['kjl_location'] === 'on') {
 			$location_active = 'active';
-			usort($books,function($a,$b) {return strnatcasecmp($a->publicationPlace,$b->publicationPlace);});
+			usort($books,function($a,$b) {return strnatcasecmp($this->remove_special_char($a->publicationPlace),$this->remove_special_char($b->publicationPlace));});
 
 		}
 		if($atts['kjl_date'] === 'on') {
 			$date_active = 'active';
-			usort($books,function($a,$b) {return strnatcasecmp($a->projectedPublicationDate,$b->projectedPublicationDate);});
+			usort($books,function($a,$b) {return strnatcasecmp($this->remove_special_char($a->projectedPublicationDate),$this->remove_special_char($b->projectedPublicationDate));});
 
 		}
 		$content = '<div class="books">';
