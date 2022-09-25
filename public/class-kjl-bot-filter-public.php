@@ -259,7 +259,7 @@ class Kjl_Bot_Filter_Public {
 			$content .= '<b>Erscheinungsort:</b> '.$book->publicationPlace.'<br>';
 			$content .= '<b>Erscheinungsdatum:</b> '.$this->get_month_name_by_number(date('n', strtotime($book->projectedPublicationDate))).' '.date('Y', strtotime($book->projectedPublicationDate)).'<br>';
 			$content .= '<b>Schlagwörter:</b> '.($book->keywords !== '' ? $book->keywords : '-').'<br>';
-			$content .= '<a href="linkToDataset">Link zu DNB</a>';
+			$content .= '<a href="'.$book->linkToDataset.'" target="_blank">Link zu DNB</a>';
 			$content .= '</div>';
 			$content .= '</div>';
 			if($i === 20) {
