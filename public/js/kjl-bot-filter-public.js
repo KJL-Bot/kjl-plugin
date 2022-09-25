@@ -36,7 +36,7 @@
 		{
 			$('.books-filter').find('input:hidden').val('');
 		}
-		// $('#toggleswitch_djlp').val($(this).is(':checked'));
+		$('#toggleswitch_djlp').val($(this).is(':checked'));
 		$('#toggleswitch_kimi').val($(this).is(':checked'));
 
 		$('#filter_author').on('click', function() {
