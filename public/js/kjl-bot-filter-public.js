@@ -81,7 +81,6 @@
 
 
 		$('#toggleswitch_djlp').on('click',function(){
-			console.log('gasdgsda');
 			var hiddenField = $('#toggleswitch_djlp_input'),
 			val = hiddenField.val();
 	
