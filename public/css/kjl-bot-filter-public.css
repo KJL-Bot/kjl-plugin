@@ -3,9 +3,8 @@
  * included in this file.
  */
 
-
-.books {
-   @media screen and (min-width: 1280px) {
+@media screen and (min-width: 1280px) {
+   .books {
       display: grid;
       grid-template-columns: 1fr 1fr;
    }
@@ -28,11 +27,11 @@
 }
 
 .toggle {
-   margin:0 0 0 2rem;
+   margin: 0.4rem 0 0 2rem;
    position: relative;
    display: inline-block;
-   width: 6rem;
-   height: 3.4rem;
+   width: 5rem;
+   height: 2.4rem;
 }
 .toggle input {
    display: none;
@@ -55,8 +54,8 @@
 .roundbutton:before {
    position: absolute;
    content: "";
-   height: 2.4rem;
-   width: 2.5rem;
+   height: 1.4rem;
+   width: 1.5rem;
    border-radius: 100%;
    display: block;
    left: 0.5rem;
@@ -77,6 +76,12 @@ input:checked + .roundbutton:before  {
    flex-wrap: wrap;
    padding-left: 0;
    row-gap: 1rem;
+   
+}
+@media screen and (max-width: 450px) {
+   .books-filter {
+      justify-content: center;
+   }
 }
 .books-filter > .filter-option {
    flex: 0 0 33.333333%;
@@ -97,13 +102,30 @@ button.filter.active {
    border-color: rgba(255, 208, 47, 1);
 }
 .slider-container {
-   margin-top: 30px;
+   margin-top: 1rem;
    margin-bottom: 60px;
    display: flex;
-   column-gap: 2rem;
+   flex-wrap: wrap;
+   row-gap: 1rem;
+  
 }
-.slider > span {
+@media screen and (max-width: 450px) {
+   .slider-container {
+      justify-content: center;
+   }
+}
+.slider-wrap {
+   border: 2px solid #333;
+   border-radius: 3.4rem;
+   width: 12rem;
+   height: 3.4rem;
+}
+.slider {
+   flex: 0 0 33.333333%;
+}
+.slider-wrap > span {
    display: block;
    float: left;
-   margin-top: 20px;
+   margin-top: 16px;
+   margin-left: 21px;
 }
