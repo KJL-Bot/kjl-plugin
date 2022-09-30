@@ -99,12 +99,68 @@ class Kjl_Bot_Filter_Admin {
 		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/kjl-bot-filter-admin.js', array( 'jquery' ), $this->version, false );
 
 	}
+	
+	private function remove_special_char($str): string
+	{
+		$res = preg_replace('/[^0-9]/', '', $str);
+		return $res;
+	}
 
 	public function kjl_cron_exec() {
-		$json_file =  wp_upload_dir(null, false, false)['basedir']. '/kjl-data/recentBooks.json';
+		global $wpdb;
+		$json_file = wp_upload_dir(null, false, false)['basedir']. '/kjl-data/recentBooks.json';
 		$json = file_get_contents($json_file);
 		$books = json_decode($json);
-		
+		$table_name = $wpdb->prefix . 'kjl_bot';
+		foreach($books as $book) {
+			$data = [
+				'id' => $book->idn,
+				'title' => $book->title,
+				'sub_title' => $book->subTitle,
+				'title_author' => $book->titleAuthor,
+				'keywords' => $book->keywords,
+				'publication_place' => $book->publicationPlace,
+				'publisher' => $book->publisher,
+				'publication_year' => $this->remove_special_char($book->publicationYear),
+				'projected_publication_year' => $book->projectedPublicationDate,
+				'link_to_dataset' => $book->linkToDataset,
+				'isbn_with_dashes' => $book->isbnWithDashes,
+				'added_to_sql' => $book->addedToSql,
+				'publisher_jlp_nominated' => $book->publisherJLPNominated,
+				'publisher_jlp_awarded' => $book->publisherJLPAwarded,
+				'publisher_kimi_nominated' => $book->publisherKimiAwarded,
+				'cover_url' => $book->coverUrl,
+			];
+			$values = ['%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'];
+			$result = $wpdb->update('wp_kjl_bot', $data, ['id' => $book->idn], $values, '%s');
+			// //If nothing found to update, it will try and create the record.
+			if ($result === FALSE || $result < 1) {
+				$sql = $wpdb->prepare(
+					"INSERT INTO $table_name
+					( id, title, sub_title, title_author, keywords, publication_place, publisher, publication_year, projected_publication_year, link_to_dataset, isbn_with_dashes, added_to_sql, publisher_jlp_nominated, publisher_jlp_awarded, publisher_kimi_nominated, cover_url )
+					VALUES ( %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, '%s' )",
+					[
+						$book->idn,
+						$book->title,
+						$book->subTitle,
+						$book->titleAuthor,
+						$book->keywords,
+						$book->publicationPlace,
+						$book->publisher,
+						$book->publicationYear,
+						$book->projectedPublicationDate,
+						$book->linkToDataset,
+						$book->isbnWithDashes,
+						$book->addedToSql,
+						$book->publisherJLPNominated,
+						$book->publisherJLPAwarded,
+						$book->publisherKimiAwarded,
+						$book->coverUrl,
+					]
+				);
+				$wpdb->query($sql);
+			}
+		}
 	}
 
 }
