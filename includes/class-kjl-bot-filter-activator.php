@@ -46,6 +46,7 @@ class Kjl_Bot_Filter_Activator {
 			 publisher varchar(255) DEFAULT '' NOT NULL,
 			 publication_year varchar(4) DEFAULT '' NOT NULL,
 			 projected_publication_year varchar(10) DEFAULT '' NOT NULL,
+			 projected_publication_date varchar(10) DEFAULT '' NOT NULL,
 			 link_to_dataset varchar(255) DEFAULT '' NOT NULL,
 			 isbn_with_dashes varchar(255) DEFAULT '' NOT NULL,
 			 added_to_sql varchar(255) DEFAULT '' NOT NULL,
