@@ -174,8 +174,9 @@ class Kjl_Bot_Filter {
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
 		$this->loader->add_action( 'init', $plugin_public, 'kjl_bot_form_handler_action' );
-		// $this->loader->add_action('init', $plugin_public, 'add_get_val');
-		// $this->loader->add_filter('query_vars', $plugin_public, 'add_get_val' );
+		$this->loader->add_action( 'init', $plugin_public, 'add_get_val');
+		$this->loader->add_action( 'wp_ajax_nopriv_kjl_load_more', $plugin_public, 'kjl_load_more' );
+		$this->loader->add_action( 'wp_ajax_kjl_load_more', $plugin_public, 'kjl_load_more' );
 		
 		add_shortcode('kjl-bot-filter', [$plugin_public, 'kjl_bot_filter_shortcode']);
 	}
