@@ -97,6 +97,15 @@ class Kjl_Bot_Filter_Public {
 		 */
 
 		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/kjl-bot-filter-public.js', array( 'jquery' ), $this->version, false );
+		wp_enqueue_script( $this->plugin_name . '_loadmore', plugin_dir_url( __FILE__ ) . 'js/loadmore.js', array( 'jquery' ), $this->version, true );
+
+		wp_localize_script( 
+			$this->plugin_name . '_loadmore', 
+			'siteConfig', [
+			'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
+			'ajax_nonce' => wp_create_nonce( 'loadmore_kjl_nonce' ),
+		 ] );
+
 
 	}
 
@@ -134,106 +143,90 @@ class Kjl_Bot_Filter_Public {
 
 	public function add_get_val() 
 	{
+		$url = site_url();
+		
 		$qvars = [
-			'djlp' 			=> 'on',
-			'djlp_filter' 	=> 'on',
-			'kimi' 			=> 'on',
-			'kimi_filter' 	=> 'on',
-			'kjl_date'		=> 'on'
+			'djlp' 				=> 'on',
+			'djlp_filter' 		=> 'on',
+			'kimi' 				=> 'on',
+			'kimi_filter' 		=> 'on',
+			'kjl_date'			=> 'on',
+			'sort_direction' 	=> 'ASC',
 		];
-		return $qvars;
+
+		$url_with_query_args = add_query_arg($qvars, $url);
+		if ( shortcode_exists( 'kjl-bot-filter' )  && empty( $_GET['sort_direction'])) {
+			// wp_safe_redirect($url_with_query_args);
+		}
+	}
+
+	public function kjl_load_more(bool $initial_request = false)
+	{
+		echo $this->get_html_for_books($this->get_books_data($this->get_parameters_for_books_filter()));
+		wp_die();
+
 	}
 
 	public function kjl_bot_filter_shortcode($attributes): string
 	{
-		global $wpdb;
-		$atts = shortcode_atts([
-			'djlp_filter' 	=> isset($_GET['djlp_filter']) ? sanitize_key($_GET['djlp_filter']) : '',
-			'kimi_filter' 	=> isset($_GET['kimi_filter']) ? sanitize_key($_GET['kimi_filter']) : '',
-			'kjl_author' 	=> isset($_GET['kjl_author']) ? sanitize_key($_GET['kjl_author']) : '',
-			'kjl_publisher' => isset($_GET['kjl_publisher']) ? sanitize_key($_GET['kjl_publisher']) : '',
-			'kjl_title' 	=> isset($_GET['kjl_title']) ? sanitize_key($_GET['kjl_title']) : '',
-			'kjl_location' 	=> isset($_GET['kjl_location']) ? sanitize_key($_GET['kjl_location']) : '',
-			'kjl_date' 		=> isset($_GET['kjl_date']) ? sanitize_key($_GET['kjl_date']) : '',
-
-		], $attributes, 'kjl-bot-filter');
+		$parameters = $this->get_parameters_for_books_filter();
+		shortcode_atts($parameters, $attributes, 'kjl-bot-filter');
 		extract( shortcode_atts( [
 			'kjl_bot_filter_id' => 'kjl_bot_filter_id',
 
 		], $attributes ), EXTR_SKIP );
-
-		$table_name = $wpdb->prefix . "kjl_bot";
 		
-		$query = "SELECT * FROM " . $table_name . ' WHERE 1 = 1';
-		$djlp_checked = '';
-		$djlp_value = '';
-		$kimi_value = '';
-		$kimi_checked = '';
-		$author_active = '';
-		$author_value = '';
-		$publisher_active = '';
-		$title_active = '';
-		$location_active = '';
-		$date_active = '';
-		if($atts['djlp_filter'] === 'on') {
-			$djlp_value = 'on';
-			$djlp_checked = 'checked';
-			$query .= ' AND publisher_jlp_nominated = 1 OR publisher_jlp_awarded = 1';
-		}
-		if($atts['kimi_filter'] === 'on') {
-			$kimi_value = 'on';
-			$kimi_checked = 'checked';
-			$query .= ' AND publisher_kimi_nominated = 1';
-		}
-		if($atts['kjl_author'] === 'on') {
-			$author_value = 'on';
-			$author_active = 'active';
-			$query .= ' ORDER BY title_author';
+		return $this->get_html_for_filter($parameters);
+	}
 
-		}
-		if($atts['kjl_publisher'] === 'on') {
-			$publisher_active = 'active';
-			$query .= ' ORDER BY publisher';
-		}
-		if($atts['kjl_title'] === 'on') {
-			$title_active = 'active';
-			$query .= ' ORDER BY title';
-		}
-		if($atts['kjl_location'] === 'on') {
-			$location_active = 'active';
-			$query .= ' ORDER BY publication_place';
-		}
-		if($atts['kjl_date'] === 'on') {
-			$date_active = 'active';
-			$query .= ' ORDER BY projected_publication_year ASC';
-		}
-		$query .= ' LIMIT 20 ';
+	private function get_parameters_for_books_filter(): array
+	{
+		return [
+			'djlp_filter' 	=> isset($_GET['djlp_filter']) ? sanitize_key($_GET['djlp_filter']) : 'on',
+			'kimi_filter' 	=> isset($_GET['kimi_filter']) ? sanitize_key($_GET['kimi_filter']) : 'on',
+			'kjl_author' 	=> isset($_GET['kjl_author']) ? sanitize_key($_GET['kjl_author']) : '',
+			'kjl_publisher' => isset($_GET['kjl_publisher']) ? sanitize_key($_GET['kjl_publisher']) : '',
+			'kjl_title' 	=> isset($_GET['kjl_title']) ? sanitize_key($_GET['kjl_title']) : '',
+			'kjl_location' 	=> isset($_GET['kjl_location']) ? sanitize_key($_GET['kjl_location']) : '',
+			'kjl_date' 		=> isset($_GET['kjl_date']) ? sanitize_key($_GET['kjl_date']) : 'on',
+			'sort_direction'=> isset($_GET['sort_direction']) ? sanitize_key($_GET['sort_direction']) : '',
+			'limit'			=> isset($_GET['limit']) ? (int) sanitize_key($_GET['limit']) : 20,
+			'offset'		=> isset($_GET['offset']) ? (int) sanitize_key($_GET['offset']) : 0,
 
-		$books = $wpdb->get_results( $query );
-		$content = '<div class="books">';
+		];
+	}
+
+	private function get_html_for_filter($atts)
+	{
 		$content = '<div class="books-filter-container">';
 		$content .= '<h3 class="filter-title">Sortiere KJL-Veröffentlichungen alphabetisch nach:</h3>';
 		$content .= '<form action="/" method="GET" name="kjl-bot">';
 		$content .= '<div class="books-filter">';
 		$content .= '<div class="filter-option">';
-		$content .= '<button id="filter_author" class="filter '.$author_active.'">Autor*in</button>';
-		$content .= '<input id="author_input" type="hidden" name="kjl_author" value="'.$author_value.'">';
+		$content .= '<button id="filter_author" class="filter '.$atts['kjl_author'].'">Autor*in</button>';
+		$content .= '<input id="author_input" type="hidden" name="kjl_author" value="'.$atts['kjl_author'].'">';
 		$content .= '</div>';
 		$content .= '<div class="filter-option">';
-		$content .= '<button id="filter_publisher" class="filter '.$publisher_active.'">Verlag</button>';
-		$content .= '<input id="publisher_input" type="hidden" name="kjl_publisher" value="">';
+		$content .= '<button id="filter_publisher" class="filter '.$atts['kjl_publisher'].'">Verlag</button>';
+		$content .= '<input id="publisher_input" type="hidden" name="kjl_publisher" value="'.$atts['kjl_publisher'].'">';
 		$content .= '</div>';
 		$content .= '<div class="filter-option">';
-		$content .= '<button id="filter_title" class="filter '.$title_active.'">Titel</button>';
-		$content .= '<input id="title_input" type="hidden" name="kjl_title" value="">';
+		$content .= '<button id="filter_title" class="filter '.$atts['kjl_title'].'">Titel</button>';
+		$content .= '<input id="title_input" type="hidden" name="kjl_title" value="'.$atts['kjl_title'].'">';
 		$content .= '</div>';
 		$content .= '<div class="filter-option">';
-		$content .= '<button id="filter_location" class="filter '.$location_active.'">Erscheinungsort</button>';
-		$content .= '<input id="location_input" type="hidden" name="kjl_location" value="">';
+		$content .= '<button id="filter_location" class="filter '.$atts['kjl_location'].'">Erscheinungsort</button>';
+		$content .= '<input id="location_input" type="hidden" name="kjl_location" value="'.$atts['kjl_location'].'">';
 		$content .= '</div>';
 		$content .= '<div class="filter-option">';
-		$content .= '<button id="filter_date" class="filter '.$date_active.'">Erscheinungsdatum</button>';
-		$content .= '<input id="date_input" type="hidden" name="kjl_date" value="">';
+		$content .= '<button id="filter_date" class="filter '.$atts['kjl_date'].'">Erscheinungsdatum</button>';
+		$content .= '<input id="date_input" type="hidden" name="kjl_date" value="'.$atts['kjl_date'].'">';
+		$content .= '</div>';
+		$content .= '<div class="filter-option">';
+		$content .= '<select id="sort_direction" name="sort_direction" class="filter">';
+		$content .= '<option value="ASC" ' . ($atts['sort_direction'] === 'asc' ? 'selected' : '') . '>Sortierung: A-Z</option>';
+		$content .= '<option value="DESC" ' . ($atts['sort_direction'] === 'desc' ? 'selected' : '') . '>Sortierung: Z-A</option>';
+		$content .= '</select>';
 		$content .= '</div>';
 		$content .= '</div><!-- books-filter -->';
 		$content .= '<div class="slider-container">';
@@ -241,25 +234,78 @@ class Kjl_Bot_Filter_Public {
 		$content .= '<div class="slider-wrap">';
 		$content .= '<span>DJLP</span>';
 		$content .= '<label class="toggle">';
-		$content .= '<input id="toggleswitch_djlp" class="toggleswitch" type="checkbox" name="djlp" value="'.$djlp_value.'" '.$djlp_checked.'>';
+		$content .= '<input id="toggleswitch_djlp" class="toggleswitch" type="checkbox" name="djlp" value="'.$atts['djlp_filter'].'" '.($atts['djlp_filter'] === 'on' ? 'checked' : '').'>';
 		$content .= '<span class="roundbutton"></span>';
 		$content .= '</label>';
-		$content .= '<input id="toggleswitch_djlp_input" type="hidden" name="djlp_filter" value="'.$djlp_value.'">';
+		$content .= '<input id="toggleswitch_djlp_input" type="hidden" name="djlp_filter" value="'.$atts['djlp_filter'].'">';
 		$content .= '</div>';
 		$content .= '</div>';
 		$content .= '<div class="slider">';
 		$content .= '<div class="slider-wrap">';
 		$content .= '<span>KIMI</span>';
 		$content .= '<label class="toggle">';
-		$content .= '<input id="toggleswitch_kimi" class="toggleswitch" type="checkbox" name="kimi" '.$kimi_checked.'>';
+		$content .= '<input id="toggleswitch_kimi" class="toggleswitch" type="checkbox" name="kimi" value="'.$atts['kimi_filter'].'" '.($atts['kimi_filter'] === 'on' ? 'checked' : '').'>';
 		$content .= '<span class="roundbutton"></span>';
 		$content .= '</label>';
-		$content .= '<input id="toggleswitch_kimi_input" type="hidden" name="kimi_filter" value="'.$kimi_value.'">';
+		$content .= '<input id="toggleswitch_kimi_input" type="hidden" name="kimi_filter" value="'.$atts['kimi_filter'].'">';
 		$content .= '</div>';
 		$content .= '</div>';
 		$content .= '</div><!-- slider-container -->';
 		$content .= '</form>';
 		$content .= '</div><!-- books-filter-container -->';
+		$content .= '<div class="books" id="books">';
+		$content .= '</div><!-- books -->';
+		$content .= '<div id="spinner" class="spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>';
+
+		return $content;
+	}
+
+	private function get_books_data($atts)
+	{
+		global $wpdb;
+		$table_name = $wpdb->prefix . "kjl_bot";
+		$limit = $atts['limit'];
+		$offset = $atts['offset'];
+		
+		$query = "SELECT * FROM " . $table_name . ' WHERE 1 = 1';
+		$sort_direction = 'ASC';
+		if(strtolower($atts['sort_direction']) === 'asc') {
+			$sort_direction = 'ASC';
+		}
+		if(strtolower($atts['sort_direction']) === 'desc') {
+			$sort_direction = 'DESC';
+		}
+		if($atts['djlp_filter'] === 'on') {
+			$query .= ' AND publisher_jlp_nominated = 1 OR publisher_jlp_awarded = 1';
+		}
+		if($atts['kimi_filter'] === 'on') {
+			$query .= ' AND publisher_kimi_nominated = 1';
+		}
+		if($atts['kjl_author'] === 'on') {
+			$query .= ' ORDER BY title_author ' . $sort_direction;
+
+		}
+		if($atts['kjl_publisher'] === 'on') {
+			$query .= ' ORDER BY publisher ' . $sort_direction;
+		}
+		if($atts['kjl_title'] === 'on') {
+			$query .= ' ORDER BY title ' . $sort_direction;
+		}
+		if($atts['kjl_location'] === 'on') {
+			$query .= ' ORDER BY publication_place ' . $sort_direction;
+		}
+		if($atts['kjl_date'] === 'on') {
+			$query .= ' ORDER BY projected_publication_year ' . $sort_direction;
+		}
+	
+		$query .= ' LIMIT ' . $limit . ' OFFSET ' . $offset;
+	
+		return $wpdb->get_results( $query );
+	}
+
+	public function get_html_for_books($books) 
+	{
+		$content = '';
 		foreach($books as $book) {
 			$content .= '<div class="book">';
 			$cover_url = plugin_dir_url( __FILE__ ).'images/empty_cover.jpg';
@@ -280,8 +326,6 @@ class Kjl_Bot_Filter_Public {
 			$content .= '</div>';
 			$content .= '</div>';
 		}
-		$content .= '</div><!-- books -->';
-		
 		return $content;
 	}
 
