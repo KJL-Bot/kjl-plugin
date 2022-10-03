@@ -41,6 +41,7 @@
 
 		$('#filter_author').on('click', function() {
 			clearAllSortingInputs();
+			$('#books').html('');
 			var hiddenField = $('#author_input'),
 				val = hiddenField.val();
 		
@@ -57,6 +58,7 @@
 
 		$('#filter_title').on('click', function() {
 			clearAllSortingInputs();
+			$('#books').html('');
 			var hiddenField = $('#title_input'),
 				val = hiddenField.val();
 		
@@ -77,6 +79,10 @@
 				val = hiddenField.val();
 		
 			hiddenField.val(val === "on" ? "off" : "on");
+		});
+
+		$('#sort_direction').on('change', function() {
+			$(this).parents('form:first').submit();
 		});
 
 
