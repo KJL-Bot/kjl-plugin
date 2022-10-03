@@ -56,6 +56,8 @@ class Kjl_Bot_Filter_Activator {
 			 cover_url varchar(255) DEFAULT '' NOT NULL,
 			 PRIMARY KEY  (id)
 		   ) $charset_collate;";
+
+			// $sql_01 = "ALTER TABLE ".$table_name." ADD title_to_sort varchar(255) DEFAULT '' NOT NULL";
 		   
 		   require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 		   dbDelta( $sql );
