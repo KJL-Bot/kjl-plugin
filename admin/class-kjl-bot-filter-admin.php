@@ -97,7 +97,6 @@ class Kjl_Bot_Filter_Admin {
 		 */
 
 		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/kjl-bot-filter-admin.js', array( 'jquery' ), $this->version, false );
-
 	}
 	
 	private function remove_special_char($str): string
@@ -115,7 +114,7 @@ class Kjl_Bot_Filter_Admin {
 		foreach($books as $book) {
 			$data = [
 				'id' => $book->idn,
-				'title' => $book->title,
+				'title' => trim($book->title, '\'".;,@#$%^&*()-_=+[]{}\\|?<>«»:~'),
 				'sub_title' => $book->subTitle,
 				'title_author' => $book->titleAuthor,
 				'keywords' => $book->keywords,
@@ -141,7 +140,7 @@ class Kjl_Bot_Filter_Admin {
 					VALUES ( %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, '%s' )",
 					[
 						$book->idn,
-						$book->title,
+						trim($book->title, '\'".;,@#$%^&*()-_=+[]{}\\|?<>«»:~'),
 						$book->subTitle,
 						$book->titleAuthor,
 						$book->keywords,
