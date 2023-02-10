@@ -162,7 +162,7 @@ class Kjl_Bot_Filter_Public {
 
 	public function kjl_load_more(bool $initial_request = false)
 	{
-		echo $this->get_html_for_books($this->get_books_data($this->get_parameters_for_books_filter()));
+		// return $this->get_books_data($this->get_parameters_for_books_filter());
 		wp_die();
 
 	}
@@ -176,30 +176,30 @@ class Kjl_Bot_Filter_Public {
 
 		], $attributes ), EXTR_SKIP );
 		
-		return $this->get_html_for_filter($parameters);
+		return $this->get_html_for_filter();
 	}
 
 	private function get_parameters_for_books_filter(): array
 	{
 		return [
 			'djlp_filter' 	=> isset($_GET['djlp_filter']) ? sanitize_key($_GET['djlp_filter']) : 'on',
-			'kimi_filter' 	=> isset($_GET['kimi_filter']) ? sanitize_key($_GET['kimi_filter']) : 'on',
+			'kimi_filter' 	=> isset($_GET['kimi_filter']) ? sanitize_key($_GET['kimi_filter']) : 'off',
 			'kjl_author' 	=> isset($_GET['kjl_author']) ? sanitize_key($_GET['kjl_author']) : '',
 			'kjl_publisher' => isset($_GET['kjl_publisher']) ? sanitize_key($_GET['kjl_publisher']) : '',
 			'kjl_title' 	=> isset($_GET['kjl_title']) ? sanitize_key($_GET['kjl_title']) : '',
 			'kjl_location' 	=> isset($_GET['kjl_location']) ? sanitize_key($_GET['kjl_location']) : '',
 			'kjl_date' 		=> isset($_GET['kjl_date']) ? sanitize_key($_GET['kjl_date']) : 'on',
 			'sort_direction'=> isset($_GET['sort_direction']) ? sanitize_key($_GET['sort_direction']) : '',
-			'limit'			=> isset($_GET['limit']) ? (int) sanitize_key($_GET['limit']) : 20,
-			'offset'		=> isset($_GET['offset']) ? (int) sanitize_key($_GET['offset']) : 0,
-
+			// 'kjl_limit'		=> isset($_GET['kjl_limit']) ? sanitize_key($_GET['kjl_limit']) : '12',
+			// 'kjl_offset'	=> isset($_GET['kjl_offset']) ? sanitize_key($_GET['kjl_offset']) : '0',
 		];
 	}
 
-	private function get_html_for_filter($atts)
+	private function get_html_for_filter()
 	{
+		$atts = $this->get_parameters_for_books_filter();
 		$content = '<div class="books-filter-container">';
-		$content .= '<h3 class="filter-title">Sortiere KJL-Veröffentlichungen alphabetisch nach:</h3>';
+		$content .= '<h3 class="filter-title">Sortiere KJL-Veröffentlichungen nach:</h3>';
 		$content .= '<form action="/" method="GET" name="kjl-bot">';
 		$content .= '<div class="books-filter">';
 		$content .= '<div class="filter-option">';
@@ -222,12 +222,6 @@ class Kjl_Bot_Filter_Public {
 		$content .= '<button id="filter_date" class="filter '.$atts['kjl_date'].'">Erscheinungsdatum</button>';
 		$content .= '<input id="date_input" type="hidden" name="kjl_date" value="'.$atts['kjl_date'].'">';
 		$content .= '</div>';
-		$content .= '<div class="filter-option">';
-		$content .= '<select id="sort_direction" name="sort_direction" class="filter">';
-		$content .= '<option value="ASC" ' . ($atts['sort_direction'] === 'asc' ? 'selected' : '') . '>Sortierung: A-Z</option>';
-		$content .= '<option value="DESC" ' . ($atts['sort_direction'] === 'desc' ? 'selected' : '') . '>Sortierung: Z-A</option>';
-		$content .= '</select>';
-		$content .= '</div>';
 		$content .= '</div><!-- books-filter -->';
 		$content .= '<div class="slider-container">';
 		$content .= '<div class="slider">';
@@ -245,87 +239,160 @@ class Kjl_Bot_Filter_Public {
 		$content .= '<span>KIMI</span>';
 		$content .= '<label class="toggle">';
 		$content .= '<input id="toggleswitch_kimi" class="toggleswitch" type="checkbox" name="kimi" value="'.$atts['kimi_filter'].'" '.($atts['kimi_filter'] === 'on' ? 'checked' : '').'>';
-		$content .= '<span class="roundbutton"></span>';
+		$content .= '<span class="roundbutton kimi"></span>';
 		$content .= '</label>';
 		$content .= '<input id="toggleswitch_kimi_input" type="hidden" name="kimi_filter" value="'.$atts['kimi_filter'].'">';
 		$content .= '</div>';
 		$content .= '</div>';
+		$content .= '<div class="slider">';
+		$content .= '<select id="sort_direction" name="sort_direction" class="filter">';
+		$content .= '<option value="ASC" ' . ($atts['sort_direction'] === 'asc' ? 'selected' : '') . '>'.($atts['kjl_date'] === 'on' ? 'Neueste zuerst' : 'A-Z').'</option>';
+		$content .= '<option value="DESC" ' . ($atts['sort_direction'] === 'desc' ? 'selected' : '') . '>'.($atts['kjl_date'] === 'on' ? 'Älteste zuerst' : 'Z-A').'</option>';
+		$content .= '</select>';
+		$content .= '</div>';
 		$content .= '</div><!-- slider-container -->';
+		// $content .= '<input type="hidden" name="kjl_offset" value="'.$atts['kjl_offset'].'" />';
+		// $content .= '<input type="hidden" name="kjl_limit" value="'.$atts['kjl_limit'].'" />';
 		$content .= '</form>';
 		$content .= '</div><!-- books-filter-container -->';
+		$args = $this->get_sorting_data();
+		
+		$the_query = new WP_Query( $args );
+		global $wpdb;
+		$the_post = $wpdb->get_row( "select post_id, meta_key from $wpdb->postmeta where meta_value = '1274762243'" );
+
 		$content .= '<div class="books" id="books">';
+		$content .= $this->get_html_for_books($the_query);
 		$content .= '</div><!-- books -->';
-		$content .= '<div id="spinner" class="spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>';
+
+		$content .= '<div class="pagination">';
+		$big = 999999999; // need an unlikely integer
+		$content .= paginate_links( array(
+            'base'         => str_replace( $big, '%#%', esc_url( get_pagenum_link( $big ) ) ),
+            'total'        => $the_query->max_num_pages,
+            'current'      => max( 1, get_query_var( 'page' ) ),
+            'format'       => '?paged=%#%',
+            'show_all'     => false,
+            'type'         => 'plain',
+			'start_size'   => 10,	
+            'end_size'     => 2,
+            'mid_size'     => 4,
+            'prev_next'    => true,
+            'prev_text'    => sprintf( '<i></i> %1$s', __( 'Zurück', 'kjl-bot' ) ),
+            'next_text'    => sprintf( '%1$s <i></i>', __( 'Weiter', 'kjl-bot' ) ),
+            'add_args'     => false,
+            'add_fragment' => '',
+        ) );
+		$content .= '</div>';
+		wp_reset_postdata();
 
 		return $content;
 	}
 
-	private function get_books_data($atts)
+	private function get_sorting_data(): array
 	{
-		global $wpdb;
-		$table_name = $wpdb->prefix . "kjl_bot";
-		$limit = $atts['limit'];
-		$offset = $atts['offset'];
+		$atts = $this->get_parameters_for_books_filter();
 		
-		$query = "SELECT * FROM " . $table_name . ' WHERE 1 = 1';
 		$sort_direction = 'ASC';
+		$order_by = 'meta_value_num';
+		$count = get_option('posts_per_page', 12);
+		$paged = get_query_var('page') ? get_query_var('page') : 1;
+		$offset = ($paged - 1) * $count;
+		$meta_key = 'projected_publication_date';
+		$order_by = 'meta_value_datetime';
+		$djlp_value = "0";
+		$kimi_value = '0';
+		$args = [
+			'orderby' => $order_by,
+			'order' => $sort_direction,
+			'post_type' => 'kjl-bot-book',
+			'posts_per_page' => $count,
+			'paged' => $paged,
+			'offset' => $offset,
+			'post_status' => 'publish',
+			'paged' => $paged,
+		];
 		if(strtolower($atts['sort_direction']) === 'asc') {
 			$sort_direction = 'ASC';
 		}
 		if(strtolower($atts['sort_direction']) === 'desc') {
 			$sort_direction = 'DESC';
 		}
-		if($atts['djlp_filter'] === 'on') {
-			$query .= ' AND publisher_jlp_nominated = 1 OR publisher_jlp_awarded = 1';
-		}
+		
 		if($atts['kimi_filter'] === 'on') {
-			$query .= ' AND publisher_kimi_nominated = 1';
+			$kimi_value = '1';
 		}
 		if($atts['kjl_author'] === 'on') {
-			$query .= ' ORDER BY title_author ' . $sort_direction;
-
+			$meta_key = 'author_name';
+			$order_by = 'meta_value';
 		}
 		if($atts['kjl_publisher'] === 'on') {
-			$query .= ' ORDER BY publisher ' . $sort_direction;
+			$meta_key = 'publisher';
+			$order_by = 'meta_value';
 		}
 		if($atts['kjl_title'] === 'on') {
-			$query .= ' ORDER BY title ' . $sort_direction;
+			$meta_key = 'title_to_sort';
+			$order_by = 'meta_value';
 		}
 		if($atts['kjl_location'] === 'on') {
-			$query .= ' ORDER BY publication_place ' . $sort_direction;
+			$meta_key = 'publication_place';
+			$order_by = 'meta_value';
 		}
 		if($atts['kjl_date'] === 'on') {
-			$query .= ' ORDER BY projected_publication_year ' . $sort_direction;
+			$meta_key = 'projected_publication_date';
+			$order_by = ['meta_value' => ($sort_direction === 'ASC' ? 'DESC' : 'ASC'), 'menu_order' => ($sort_direction === 'ASC' ? 'DESC' : 'ASC')];
+			$args['meta_type'] = 'DATETIME';
 		}
-	
-		$query .= ' LIMIT ' . $limit . ' OFFSET ' . $offset;
-	
-		return $wpdb->get_results( $query );
+		if($atts['djlp_filter'] === 'on') {
+			$djlp_value = "1";
+		}
+		$args['order'] = $sort_direction;
+		$args['meta_key'] = $meta_key;
+		$args['orderby'] = $order_by;
+		$args['meta_query'] = [
+			'relation' => 'AND',
+			[
+				'key' => 'publisher_kimi_nominated',
+				'value' => $kimi_value,
+			],
+			[
+				'relation' => 'OR',
+				[
+					'key' => 'publisher_jlp_nominated',
+					'value' => $djlp_value,
+				],
+				[
+					'key' => 'publisher_jlp_awarded',
+					'value' => $djlp_value,
+				]
+			],
+		];
+
+		return $args;
 	}
 
-	public function get_html_for_books($books) 
+	public function get_html_for_books($the_query) 
 	{
-		$content = '';
-		foreach($books as $book) {
-			$content .= '<div class="book">';
-			$cover_url = plugin_dir_url( __FILE__ ).'images/empty_cover.jpg';
-			$file = $book->cover_url;
-			$file_headers = @get_headers($file);
-			if($file_headers[0] !== 'HTTP/1.1 404 Not Found') {
-				$cover_url = $file;
+		$content = 'Keine Bücher für diese Filterauswahl vorhanden.';
+		if ( $the_query->have_posts() )  {
+			$content = '';
+			while ( $the_query->have_posts() ) {
+				$the_query->the_post();
+				$content .= '<div class="book">';
+				$content .= '<img class="book-cover" src="'.(get_the_post_thumbnail_url() !== false ? get_the_post_thumbnail_url() : plugin_dir_url( __FILE__ ).'images/empty_cover.jpg').'" loading="lazy" />';
+				$content .= '<div class="book-info">';
+				$content .= '<b>Autor(in):</b> '.(get_post_meta(get_the_ID(), 'author_name')[0] !== '' ? get_post_meta(get_the_ID(), 'author_name')[0] : '-').'<br>';
+				$content .= '<b>Titel:</b> '.get_the_title().'<br>';
+				$content .= '<b>Verlag:</b> '.get_post_meta(get_the_ID(), 'publisher')[0].'<br>';
+				$content .= '<b>Erscheinungsort:</b> '.get_post_meta(get_the_ID(), 'publication_place')[0].'<br>';
+				$content .= '<b>Erscheinungsdatum:</b> '.$this->get_month_name_by_number(date('n', strtotime(get_post_meta(get_the_ID(), 'projected_publication_date')[0]))).' '.date('Y', strtotime(get_post_meta(get_the_ID(), 'projected_publication_date')[0])).'<br>';
+				$content .= '<b>Schlagwörter:</b> '.(get_post_meta(get_the_ID(), 'keywords')[0] !== '' ? get_post_meta(get_the_ID(), 'author_name')[0] : '-').'<br>';
+				$content .= '<a href="'.get_post_meta(get_the_ID(), 'link_to_dataset')[0].'" target="_blank">Link zur DNB</a>';
+				$content .= '</div>';
+				$content .= '</div>';
 			}
-			$content .= '<img class="book-cover" src="'.$cover_url.'" />';
-			$content .= '<div class="book-info">';
-			$content .= '<b>Autor(in):</b> '.(isset($book->title_author) ? $book->title_author : '-').'<br>';
-			$content .= '<b>Titel:</b> '.$book->title.'<br>';
-			$content .= '<b>Verlag:</b> '.$book->publisher.'<br>';
-			$content .= '<b>Erscheinungsort:</b> '.$book->publication_place.'<br>';
-			$content .= '<b>Erscheinungsdatum:</b> '.$this->get_month_name_by_number(date('n', strtotime($book->projected_publication_year))).' '.date('Y', strtotime($book->projected_publication_year)).'<br>';
-			$content .= '<b>Schlagwörter:</b> '.($book->keywords !== '' ? $book->keywords : '-').'<br>';
-			$content .= '<a href="'.$book->link_to_dataset.'" target="_blank">Link zu DNB</a>';
-			$content .= '</div>';
-			$content .= '</div>';
 		}
+		
 		return $content;
 	}
 

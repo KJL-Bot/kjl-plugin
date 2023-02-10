@@ -1,17 +1,18 @@
 var busy = false;
-var limit = 20;
+var limit = 12;
 var offset = 0;
 var assetPath = siteConfig.ajaxUrl;
+var loadCounter = 0;
 
-function displayRecords(lim, off) {
+function displayRecords(lim, offset) {
     jQuery.ajax({
             type: "GET",
             async: false,
             url: assetPath,
             data: {
                 'limit': lim,
-                "offset": off,
-                "action": 'kjl_load_more',
+                "offset": offset,
+                "action": 'kjl_load_morea',
                 "kjl_author": jQuery('#author_input').val(),
                 "kjl_publisher": jQuery('#publisher_input').val(),
                 "kjl_title": jQuery('#title_input').val(),
@@ -25,36 +26,54 @@ function displayRecords(lim, off) {
             },
             cache: false,
             beforeSend: function() {
-                jQuery("#loader_message").html("").hide();
+                // jQuery("#loader_message").html("").hide();
                 jQuery('#spinner').show();
             },
             success: function(html) {
                 jQuery("#books").append(html);
-                jQuery('#spinner').hide();
+                
+                ++loadCounter;
                 if (html == "") {
+                    jQuery("#spinner").html('');
                     jQuery("#spinner").text('Keine weiteren Bücher.').show()
+                } else if (loadCounter >= 1) {
+                    jQuery("#load_more").css('display', 'block');
                 } else {
                     jQuery("#spinner").show();
                 }
                 window.busy = false;
+                jQuery('#spinner').hide();
+            },
+            done: function(e) {
+                console.log('done');
+            },
+            fail: function(e) {
+                console.log('error: ' + e);
             }
     });
 }
 (function( $ ) {
-	'use strict';
+	// 'use strict';
     if (busy == false) {
         busy = true;
         // start to load the first set of data
+        $("#spinner").show();
         displayRecords(limit, offset);
     }
-    $(window).scroll(function() {
-        // make sure u give the container id of the data to be loaded in.
-        if ($(window).scrollTop() + $(window).height() > $("#books").height() && !busy) {
-          busy = true;
-          offset = limit + offset;
-
-          displayRecords(limit, offset);
-
-        }
+    $('#load_more').on('click', function (e) {
+        offset += parseInt(limit);
+        // $(this).remove();
+        $("#spinner").show();
+        displayRecords(limit, offset);
     });
+    // $(window).scroll(function() {
+    //     // make sure u give the container id of the data to be loaded in.
+    //     if ($(window).scrollTop() + $(window).height() > $("#books").height() && !busy && loadCounter < 1) {
+    //       busy = true;
+    //       offset = limit + offset;
+
+    //       displayRecords(limit, offset);
+
+    //     }
+    // });
 })( jQuery );
