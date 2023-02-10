@@ -157,7 +157,8 @@ class Kjl_Bot_Filter {
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
 		$this->loader->add_action( 'kjl_cron_hook', $plugin_admin, 'kjl_cron_exec' );
-
+		$this->loader->add_action( 'init', $plugin_admin, 'create_posttype');
+		$this->loader->add_action( 'init', $plugin_admin, 'register_taxonomies' );
 	}
 
 	/**
