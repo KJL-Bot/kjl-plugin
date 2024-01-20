@@ -40,6 +40,19 @@ class Kjl_Bot_Filter_Public {
 	 */
 	private $version;
 
+	public const REVIEWS = [
+		'AJuM'	=> '', 
+		'bv_K'	=> '', 
+		'bv_J'	=> '', 
+		'FAZ'	=> 'Frankfurter Allgemeine Zeitung', 
+		'KBC'	=> '', 
+		'JBC'	=> ''
+	];
+
+	public const UMLAUTS = [
+		'ö' => 'oe'
+	];
+
 	/**
 	 * Initialize the class and set its properties.
 	 *
@@ -190,6 +203,7 @@ class Kjl_Bot_Filter_Public {
 			'kjl_location' 	=> isset($_GET['kjl_location']) ? sanitize_key($_GET['kjl_location']) : '',
 			'kjl_date' 		=> isset($_GET['kjl_date']) ? sanitize_key($_GET['kjl_date']) : 'on',
 			'sort_direction'=> isset($_GET['sort_direction']) ? sanitize_key($_GET['sort_direction']) : '',
+			'kjl_search'    => isset($_GET['kjl_search']) ? sanitize_text_field($_GET['kjl_search']) : '',
 			// 'kjl_limit'		=> isset($_GET['kjl_limit']) ? sanitize_key($_GET['kjl_limit']) : '12',
 			// 'kjl_offset'	=> isset($_GET['kjl_offset']) ? sanitize_key($_GET['kjl_offset']) : '0',
 		];
@@ -197,6 +211,7 @@ class Kjl_Bot_Filter_Public {
 
 	private function get_html_for_filter()
 	{
+		// echo get_search_form();
 		$atts = $this->get_parameters_for_books_filter();
 		$content = '<div class="books-filter-container">';
 		$content .= '<h3 class="filter-title">Sortiere KJL-Veröffentlichungen nach:</h3>';
@@ -221,6 +236,9 @@ class Kjl_Bot_Filter_Public {
 		$content .= '<div class="filter-option">';
 		$content .= '<button id="filter_date" class="filter '.$atts['kjl_date'].'">Erscheinungsdatum</button>';
 		$content .= '<input id="date_input" type="hidden" name="kjl_date" value="'.$atts['kjl_date'].'">';
+		// $content .= '</div>';
+		// $content .= '<div class="filter-option">';
+		// $content .= '<input type="text" name="kjl_search" value="'.$atts['kjl_search'].'" class="filter" placeholder="Suche">';
 		$content .= '</div>';
 		$content .= '</div><!-- books-filter -->';
 		$content .= '<div class="slider-container">';
@@ -258,14 +276,13 @@ class Kjl_Bot_Filter_Public {
 		$args = $this->get_sorting_data();
 		
 		$the_query = new WP_Query( $args );
-		global $wpdb;
-		$the_post = $wpdb->get_row( "select post_id, meta_key from $wpdb->postmeta where meta_value = '1274762243'" );
 
 		$content .= '<div class="books" id="books">';
 		$content .= $this->get_html_for_books($the_query);
 		$content .= '</div><!-- books -->';
 
 		$content .= '<div class="pagination">';
+		
 		$big = 999999999; // need an unlikely integer
 		$content .= paginate_links( array(
             'base'         => str_replace( $big, '%#%', esc_url( get_pagenum_link( $big ) ) ),
@@ -341,10 +358,13 @@ class Kjl_Bot_Filter_Public {
 		if($atts['kjl_date'] === 'on') {
 			$meta_key = 'projected_publication_date';
 			$order_by = ['meta_value' => ($sort_direction === 'ASC' ? 'DESC' : 'ASC'), 'menu_order' => ($sort_direction === 'ASC' ? 'DESC' : 'ASC')];
-			$args['meta_type'] = 'DATETIME';
+			$args['meta_type'] = 'NUMERIC'; // DATETIME
 		}
 		if($atts['djlp_filter'] === 'on') {
 			$djlp_value = "1";
+		}
+		if($atts['kjl_search'] !== '') {
+			$args['s'] = urlencode($atts['kjl_search']);
 		}
 		$args['order'] = $sort_direction;
 		$args['meta_key'] = $meta_key;
@@ -364,9 +384,23 @@ class Kjl_Bot_Filter_Public {
 				[
 					'key' => 'publisher_jlp_awarded',
 					'value' => $djlp_value,
-				]
+				],
 			],
 		];
+		
+		// if($args['s'] !== '') {
+		// 	$args['meta_query'] = [
+		// 			'relation' => 'OR',
+		// 			[
+		// 				'key' => 'publisher_jlp_nominated',
+		// 				'value' => $djlp_value,
+		// 			],
+		// 			[
+		// 				'key' => 'publisher_jlp_awarded',
+		// 				'value' => $djlp_value,
+		// 			],
+		// 	];
+		// }
 
 		return $args;
 	}
@@ -374,12 +408,21 @@ class Kjl_Bot_Filter_Public {
 	public function get_html_for_books($the_query) 
 	{
 		$content = 'Keine Bücher für diese Filterauswahl vorhanden.';
+		if(isset($_GET['test']) && $_GET['test'] === 'test') {
+			$url = 'https://portal.dnb.de/opac/mvb/cover?isbn=978-3-7575-5673-0&size=l';
+			$file_headers = @get_headers($url);
+		}
 		if ( $the_query->have_posts() )  {
 			$content = '';
 			while ( $the_query->have_posts() ) {
+				if(!empty(get_post_meta(get_the_ID(), 'reviews'))) {
+					// var_dump(count(unserialize(get_post_meta(get_the_ID(), 'reviews')[0])));
+					// var_dump(unserialize(get_post_meta(get_the_ID(), 'reviews')[0]));
+				}
+				// var_dump(get_post_meta(get_the_ID(), 'cover_url'));
 				$the_query->the_post();
 				$content .= '<div class="book">';
-				$content .= '<img class="book-cover" src="'.(get_the_post_thumbnail_url() !== false ? get_the_post_thumbnail_url() : plugin_dir_url( __FILE__ ).'images/empty_cover.jpg').'" loading="lazy" />';
+				$content .= '<img class="book-cover" src="'.(!empty(get_post_meta(get_the_ID(), 'cover_url')) ? get_post_meta(get_the_ID(), 'cover_url')[0] : plugin_dir_url( __FILE__ ).'images/empty_cover.jpg').'" loading="lazy" />';
 				$content .= '<div class="book-info">';
 				$content .= '<b>Autor(in):</b> '.(get_post_meta(get_the_ID(), 'author_name')[0] !== '' ? get_post_meta(get_the_ID(), 'author_name')[0] : '-').'<br>';
 				$content .= '<b>Titel:</b> '.get_the_title().'<br>';
@@ -387,6 +430,7 @@ class Kjl_Bot_Filter_Public {
 				$content .= '<b>Erscheinungsort:</b> '.get_post_meta(get_the_ID(), 'publication_place')[0].'<br>';
 				$content .= '<b>Erscheinungsdatum:</b> '.$this->get_month_name_by_number(date('n', strtotime(get_post_meta(get_the_ID(), 'projected_publication_date')[0]))).' '.date('Y', strtotime(get_post_meta(get_the_ID(), 'projected_publication_date')[0])).'<br>';
 				$content .= '<b>Schlagwörter:</b> '.(get_post_meta(get_the_ID(), 'keywords')[0] !== '' ? get_post_meta(get_the_ID(), 'author_name')[0] : '-').'<br>';
+				$content .= '<b>Rezension(en):</b> '.(array_key_exists(0, get_post_meta(get_the_ID(), 'FAZ')) ? '<a target="_blank" href="'.get_post_meta(get_the_ID(), 'FAZ')[0].'" title="Frankfurter Allgemeine Zeitung">FAZ</a>' : '-').'<br>';
 				$content .= '<a href="'.get_post_meta(get_the_ID(), 'link_to_dataset')[0].'" target="_blank">Link zur DNB</a>';
 				$content .= '</div>';
 				$content .= '</div>';
