@@ -189,6 +189,7 @@ class Kjl_Bot_Filter_Admin {
 		include_once( ABSPATH . '/wp-admin/includes/image.php' );
 		$cover_url = plugin_dir_url( __FILE__ ).'images/empty_cover.jpg';
 		$file_headers = @get_headers($url);
+		
 		if($file_headers[0] !== 'HTTP/1.1 404 Not Found') {
 		
 			$uploaddir = wp_upload_dir();
@@ -217,6 +218,7 @@ class Kjl_Bot_Filter_Admin {
 			$cover_url = wp_get_attachment_url($imagenew->ID);
 			set_post_thumbnail( $post_id, $attach_id );
 		}
+		return $cover_url;
 	}
 
 	/**
@@ -255,8 +257,8 @@ class Kjl_Bot_Filter_Admin {
 			$post_status = 'publish';
 			$post_id = 0;
 			if(
-				get_post_meta($the_post->post_id, 'projected_publication_date', true) <= date("Y-m-d",strtotime("-2 month",strtotime(date("Y-m-01",strtotime("now") ) )))
-		 		|| get_post_meta($the_post->post_id, 'projected_publication_date', true) > date("Y-m-d",strtotime("+1 month",strtotime(date("Y-m-01",strtotime("now") ) )))
+				get_post_meta($the_post->post_id, 'projected_publication_date', true) <= date("Y-m",strtotime("-2 month",strtotime(date("Y-m",strtotime("now") ) )))
+		 		|| get_post_meta($the_post->post_id, 'projected_publication_date', true) > date("Y-m",strtotime("+1 month",strtotime(date("Y-m",strtotime("now") ) )))
 				) {
 				$post_status = 'private';
 				$post_id = $the_post->post_id;
@@ -269,31 +271,107 @@ class Kjl_Bot_Filter_Admin {
 			];
 			if($the_post !== NULL) {
 				$post_array['ID'] = $the_post->post_id;
+				$post_id = $the_post->post_id;
 				wp_update_post($post_array);
 				update_post_meta($the_post->post_id, 'publisher_jlp_nominated', $book->publisherJLPNominated);
 				update_post_meta($the_post->post_id, 'publisher_jlp_awarded', $book->publisherJLPAwarded);
 				update_post_meta($the_post->post_id, 'publisher_kimi_nominated', $book->publisherKimiAwarded);
+				update_post_meta($the_post->post_id, 'cover_url', str_replace('size=l', 'size=m', $book->coverUrl));
+				if(isset($book->reviews)) {
+					update_post_meta($the_post->post_id, 'reviews', serialize($book->reviews));
+					// foreach($book->reviews as $review) {
+					// 	update_post_meta($the_post->post_id, $review->reviewSite, $review->reviewUrl);
+					// }
+				}
 				continue;
+			} else {
+				$post_id = wp_insert_post($post_array);
+				add_post_meta($post_id, 'idn', $book->idn);
+				add_post_meta($post_id, 'title_author', trim(trim($book->titleAuthor),' \'".;,@#$%^&*()-_=+[]{}\\|?<>«»:~'));
+				add_post_meta($post_id, 'author_name', $book->sortingAuthor);
+				add_post_meta($post_id, 'keywords', $book->keywords);
+				add_post_meta($post_id, 'publication_place', $book->publicationPlace);
+				add_post_meta($post_id, 'publisher', trim($book->publisher,'\'".;,@#$%^&*()-_=+[]{}\\|?<>«»:~'));
+				add_post_meta($post_id, 'publication_year',  $this->remove_special_char($book->publicationYear));
+				add_post_meta($post_id, 'projected_publication_date', $book->projectedPublicationDate);
+				add_post_meta($post_id, 'link_to_dataset', $book->linkToDataset);
+				add_post_meta($post_id, 'isbn_with_dashes', $book->isbnWithDashes);
+				add_post_meta($post_id, 'added_to_sql', $book->addedToSql);
+				add_post_meta($post_id, 'publisher_jlp_nominated', $book->publisherJLPNominated);
+				add_post_meta($post_id, 'publisher_jlp_awarded', $book->publisherJLPAwarded);
+				add_post_meta($post_id, 'publisher_kimi_nominated', $book->publisherKimiAwarded);
+				add_post_meta($post_id, 'title_to_sort', $book->sortingTitle);
+				add_post_meta($post_id, 'cover_url', $book->coverUrl);
+				if(isset($book->reviews)) {
+					add_post_meta($post_id, 'reviews', $book->reviews);
+				
+				}
 			}
-			
-			$post_id = wp_insert_post($post_array);
-			add_post_meta($post_id, 'idn', $book->idn);
-			add_post_meta($post_id, 'title_author', trim(trim($book->titleAuthor),' \'".;,@#$%^&*()-_=+[]{}\\|?<>«»:~'));
-			add_post_meta($post_id, 'author_name', $book->sortingAuthor);
-			add_post_meta($post_id, 'keywords', $book->keywords);
-			add_post_meta($post_id, 'publication_place', $book->publicationPlace);
-			add_post_meta($post_id, 'publisher', trim($book->publisher,'\'".;,@#$%^&*()-_=+[]{}\\|?<>«»:~'));
-			add_post_meta($post_id, 'publication_year',  $this->remove_special_char($book->publicationYear));
-			add_post_meta($post_id, 'projected_publication_date', $book->projectedPublicationDate);
-			add_post_meta($post_id, 'link_to_dataset', $book->linkToDataset);
-			add_post_meta($post_id, 'isbn_with_dashes', $book->isbnWithDashes);
-			add_post_meta($post_id, 'added_to_sql', $book->addedToSql);
-			add_post_meta($post_id, 'publisher_jlp_nominated', $book->publisherJLPNominated);
-			add_post_meta($post_id, 'publisher_jlp_awarded', $book->publisherJLPAwarded);
-			add_post_meta($post_id, 'publisher_kimi_nominated', $book->publisherKimiAwarded);
-			add_post_meta($post_id, 'title_to_sort', $book->sortingTitle);
-			$this->save_file_and_return_filepath($post_id, $book->coverUrl, $book->idn . '.jpg');
+			// $this->save_file_and_return_filepath($post_id, $book->coverUrl, $book->idn . '.jpg');			
 		}
+
+		$this->kjl_cleanup();
+	}
+
+	public function kjl_cleanup()
+	{
+		$posts = get_posts([
+			'post_type' => 'kjl-bot-book',
+			'post_status' => 'publish',
+			'posts_per_page' => -1,
+		  ]);
+
+		$privatePosts = get_posts([
+			'post_type' => 'kjl-bot-book',
+			'post_status' => 'private',
+			'posts_per_page' => -1,
+			]);
+
+		foreach($posts as $post) {
+			$postTitles = '';
+			$post_status = 'publish';
+			
+			if(
+				get_post_meta($post->ID, 'projected_publication_date', true) <= date("Y-m", strtotime("-2 month", strtotime(date("Y-m", strtotime("now") ) )))
+		 		|| get_post_meta($post->ID, 'projected_publication_date', true) > date("Y-m", strtotime("+1 month", strtotime(date("Y-m", strtotime("now") ) )))
+				) {
+					$postTitles .= $post->post_title . '<br>';
+					$post_status = 'private';
+			}
+			$post_array = [
+				'ID'			=> $post->ID,
+				'post_status'   => $post_status,
+				'post_type'     => 'kjl-bot-book',
+				'post_author'   => 1,
+			];
+			wp_update_post($post_array);
+		}
+
+		foreach($privatePosts as $private_post) {
+			$postTitles = '';
+			$private_post_status = 'publish';
+			if(get_post_meta($private_post->ID, 'projected_publication_date', true) <= date("Y-m", strtotime("-2 month", strtotime(date("Y-m", strtotime("now") ) )))) {
+				if( has_post_thumbnail( $private_post->ID ) ) {
+					$attachment_id = get_post_thumbnail_id($private_post->ID);
+					wp_delete_attachment($attachment_id, true);
+				}
+				wp_delete_post($private_post->ID, true);
+			}
+			if(get_post_meta($private_post->ID, 'projected_publication_date', true) > date("Y-m", strtotime("+1 month", strtotime(date("Y-m", strtotime("now") ) )))
+				) {
+					$postTitles .= $private_post->post_title . '<br>';
+					$private_post_status = 'private';
+			}
+			$private_post_array = [
+				'ID'			=> $private_post->ID,
+				'post_status'   => $private_post_status,
+				'post_type'     => 'kjl-bot-book',
+				'post_author'   => 1,
+			];
+			wp_update_post($private_post_array);
+		}
+
+		wp_mail('post@gabrielserwas.com', 'kjl-bot', 'Update for posts ('.count($posts).'): <br>' . $postTitles . 'done.');
 	}
 
 }
