@@ -106,6 +106,14 @@ input:checked + .roundbutton:before  {
    height: 3.4rem;
    padding: 0 15px;
 }
+input[type="text"].filter {
+   background-color: #fff;
+   border: 2px solid #333;
+   border-radius: 3.4rem;
+   width: 12rem;
+   height: 3.4rem;
+   padding: 0 15px;
+}
 .filter.on {
    border-color: rgba(255, 208, 47, 1);
 }
