@@ -415,11 +415,6 @@ class Kjl_Bot_Filter_Public {
 		if ( $the_query->have_posts() )  {
 			$content = '';
 			while ( $the_query->have_posts() ) {
-				if(!empty(get_post_meta(get_the_ID(), 'reviews'))) {
-					// var_dump(count(unserialize(get_post_meta(get_the_ID(), 'reviews')[0])));
-					// var_dump(unserialize(get_post_meta(get_the_ID(), 'reviews')[0]));
-				}
-				// var_dump(get_post_meta(get_the_ID(), 'cover_url'));
 				$the_query->the_post();
 				$content .= '<div class="book">';
 				$content .= '<img class="book-cover" src="'.(!empty(get_post_meta(get_the_ID(), 'cover_url')) ? get_post_meta(get_the_ID(), 'cover_url')[0] : plugin_dir_url( __FILE__ ).'images/empty_cover.jpg').'" loading="lazy" />';
@@ -433,7 +428,21 @@ class Kjl_Bot_Filter_Public {
 				$content .= '<b>Erscheinungsort:</b> '.get_post_meta(get_the_ID(), 'publication_place')[0].'<br>';
 				$content .= '<b>Erscheinungsdatum:</b> '.$this->get_month_name_by_number(date('n', strtotime(get_post_meta(get_the_ID(), 'projected_publication_date')[0]))).' '.date('Y', strtotime(get_post_meta(get_the_ID(), 'projected_publication_date')[0])).'<br>';
 				$content .= '<b>Schlagwörter:</b> '.(get_post_meta(get_the_ID(), 'keywords')[0] !== '' ? get_post_meta(get_the_ID(), 'author_name')[0] : '-').'<br>';
-				$content .= '<b>Rezension(en):</b> '.(array_key_exists(0, get_post_meta(get_the_ID(), 'FAZ')) ? '<a target="_blank" href="'.get_post_meta(get_the_ID(), 'FAZ')[0].'" title="Frankfurter Allgemeine Zeitung">FAZ</a>' : '-').'<br>';
+				$content .= '<b>Rezension(en):</b>';
+				if(!empty(get_post_meta(get_the_ID(), 'reviews'))) {
+					$reviews = unserialize(get_post_meta(get_the_ID(), 'reviews')[0]);
+					$content .= ' (';
+					foreach($reviews as $review) {
+						$content .= '<a target="_blank" href="'.$review->reviewUrl.'" title="Frankfurter Allgemeine Zeitung">FAZ</a>';
+						if(next($reviews)) {
+							$content .= ', ';
+						}
+					}
+					$content .= ')';
+				} else {
+					$content .= '-';
+				}
+				$content .= '<br>';
 				$content .= '<a href="'.get_post_meta(get_the_ID(), 'link_to_dataset')[0].'" target="_blank">Link zur DNB</a>';
 				$content .= '</div>';
 				$content .= '</div>';
