@@ -422,8 +422,8 @@ class Kjl_Bot_Filter_Public {
 				$content .= '<b>Autor(in):</b> '.(get_post_meta(get_the_ID(), 'author_name')[0] !== '' ? get_post_meta(get_the_ID(), 'author_name')[0] : '-').'<br>';
 				$content .= '<b>Titel:</b> '.get_the_title().'<br>';
 				$content .= '<b>Verlag:</b> '.get_post_meta(get_the_ID(), 'publisher')[0];
-				$content .=  get_post_meta(get_the_ID(), 'publisher_jlp_nominated')[0] == "1" ? ' <small>(<a href="#" title="Deutscher Jugendliteraturpreis">DJLP</a>)</small>' : '';
-				$content .=  get_post_meta(get_the_ID(), 'publisher_kimi_nominated')[0] == "1" ? ' <small>(<a href="#" title="Siegel für Vielfalt in Kinder- und Jugendliteratur">KIMI</a>)</small>' : '';
+				$content .=  get_post_meta(get_the_ID(), 'publisher_jlp_nominated')[0] == "1" ? ' <small>(<span title="Deutscher Jugendliteraturpreis">DJLP</span>)</small>' : '';
+				$content .=  get_post_meta(get_the_ID(), 'publisher_kimi_nominated')[0] == "1" ? ' <small>(<span title="Siegel für Vielfalt in Kinder- und Jugendliteratur">KIMI</span>)</small>' : '';
 				$content .= '<br>';
 				$content .= '<b>Erscheinungsort:</b> '.get_post_meta(get_the_ID(), 'publication_place')[0].'<br>';
 				$content .= '<b>Erscheinungsdatum:</b> '.$this->get_month_name_by_number(date('n', strtotime(get_post_meta(get_the_ID(), 'projected_publication_date')[0]))).' '.date('Y', strtotime(get_post_meta(get_the_ID(), 'projected_publication_date')[0])).'<br>';
