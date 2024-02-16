@@ -192,3 +192,6 @@ ul.kjl_pagination li {
    color: #fff;
    background-color: rgb(108, 117, 125);
  }
+ .badge:hover {
+   cursor: help;
+ }
