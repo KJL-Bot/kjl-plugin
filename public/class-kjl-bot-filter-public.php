@@ -428,10 +428,10 @@ class Kjl_Bot_Filter_Public {
 				$content .= '<b>Erscheinungsort:</b> '.get_post_meta(get_the_ID(), 'publication_place')[0].'<br>';
 				$content .= '<b>Erscheinungsdatum:</b> '.$this->get_month_name_by_number(date('n', strtotime(get_post_meta(get_the_ID(), 'projected_publication_date')[0]))).' '.date('Y', strtotime(get_post_meta(get_the_ID(), 'projected_publication_date')[0])).'<br>';
 				$content .= '<b>Schlagwörter:</b> '.(get_post_meta(get_the_ID(), 'keywords')[0] !== '' ? get_post_meta(get_the_ID(), 'author_name')[0] : '-').'<br>';
-				$content .= '<b>Rezension(en):</b>';
+				$content .= '<b>Rezension(en):</b> ';
 				if(!empty(get_post_meta(get_the_ID(), 'reviews'))) {
 					$reviews = unserialize(get_post_meta(get_the_ID(), 'reviews')[0]);
-					$content .= ' (';
+					$content .= '(';
 					foreach($reviews as $review) {
 						$content .= '<a target="_blank" href="'.$review->reviewUrl.'" title="Frankfurter Allgemeine Zeitung">FAZ</a>';
 						if(next($reviews)) {
