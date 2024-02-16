@@ -182,3 +182,13 @@ ul.kjl_pagination li {
  ul.kjl_pagination li a:hover {
    color: blue;
  }
+ .badge {
+   padding: 0.35em 0.65em;
+   font-size: 0.75em;
+   font-weight: 700;
+   line-height: 1;
+   text-align: center;
+   border-radius: 6px;
+   color: #fff;
+   background-color: rgb(108, 117, 125);
+ }
