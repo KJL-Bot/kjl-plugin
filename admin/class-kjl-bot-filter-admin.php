@@ -250,12 +250,35 @@ class Kjl_Bot_Filter_Admin {
 		$json_file = wp_upload_dir(null, false, false)['basedir']. '/kjl-data/recentBooks.json';
 		$json = file_get_contents($json_file);
 		$books = json_decode($json);
+		$keywords = '';
 		
 
 		foreach($books as $book) {
 			$the_post = $wpdb->get_row( "SELECT post_id, meta_key FROM $wpdb->postmeta WHERE meta_value = '" . $book->idn . "' AND meta_key = 'idn'" );
 			$post_status = 'publish';
 			$post_id = 0;
+			$keywordsFieldOne = explode(',', $book->keywords);
+			$keywordsFieldTwo = explode(',', $book->keywords653);
+			if(!empty($keywordsFieldOne)) {
+				foreach($keywordsFieldOne as $keyword) {
+					$keywords .= $keyword;
+					if(next($keywordsFieldOne)) {
+						$keywords .= ', ';
+					}
+				}
+			}
+			if(!empty($keywordsFieldTwo)) {
+				if($keywords !== '') {
+					$keywords .= ', ';
+				}
+				foreach($keywordsFieldTwo as $keyword) {
+					$keywords .= $keyword;
+					if(next($keywordsFieldOne)) {
+						$keywords .= ', ';
+					}
+				}
+			}
+
 			if(
 				get_post_meta($the_post->post_id, 'projected_publication_date', true) <= date("Y-m",strtotime("-2 month",strtotime(date("Y-m",strtotime("now") ) )))
 		 		|| get_post_meta($the_post->post_id, 'projected_publication_date', true) > date("Y-m",strtotime("+1 month",strtotime(date("Y-m",strtotime("now") ) )))
@@ -277,6 +300,7 @@ class Kjl_Bot_Filter_Admin {
 				update_post_meta($the_post->post_id, 'publisher_jlp_awarded', $book->publisherJLPAwarded);
 				update_post_meta($the_post->post_id, 'publisher_kimi_nominated', $book->publisherKimiAwarded);
 				update_post_meta($the_post->post_id, 'cover_url', str_replace('size=l', 'size=m', $book->coverUrl));
+				update_post_meta($the_post->post_id, 'keywords', $keywords);
 				if(isset($book->reviews)) {
 					update_post_meta($the_post->post_id, 'reviews', serialize($book->reviews));
 					// foreach($book->reviews as $review) {
@@ -289,7 +313,7 @@ class Kjl_Bot_Filter_Admin {
 				add_post_meta($post_id, 'idn', $book->idn);
 				add_post_meta($post_id, 'title_author', trim(trim($book->titleAuthor),' \'".;,@#$%^&*()-_=+[]{}\\|?<>«»:~'));
 				add_post_meta($post_id, 'author_name', $book->sortingAuthor);
-				add_post_meta($post_id, 'keywords', $book->keywords);
+				add_post_meta($post_id, 'keywords', $keywords);
 				add_post_meta($post_id, 'publication_place', $book->publicationPlace);
 				add_post_meta($post_id, 'publisher', trim($book->publisher,'\'".;,@#$%^&*()-_=+[]{}\\|?<>«»:~'));
 				add_post_meta($post_id, 'publication_year',  $this->remove_special_char($book->publicationYear));
